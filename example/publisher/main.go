@@ -4,11 +4,27 @@ import (
 	"context"
 	msg "github.com/jinleibill/message-go"
 	"github.com/jinleibill/message-go/kafka"
+	"github.com/jinleibill/message-go/nats"
+	"os"
 )
 
 func main() {
-	brokers := []string{"192.168.64.7:9092"}
-	producer := kafka.NewProducer(brokers)
+	driver := os.Getenv("DRIVER")
+	if driver == "" {
+		driver = "kafka"
+	}
+
+	var producer msg.Producer
+	switch driver {
+	case "kafka":
+		brokers := []string{"192.168.64.7:9092"}
+		producer = kafka.NewProducer(brokers)
+	case "nats":
+		servers := []string{"nats://127.0.0.1:4222"}
+		producer = nats.NewProducer(servers)
+	default:
+		panic("unknown driver")
+	}
 	publisher := msg.NewPublisher(producer)
 
 	ctx := context.Background()

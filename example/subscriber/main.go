@@ -5,6 +5,7 @@ import (
 	"fmt"
 	msg "github.com/jinleibill/message-go"
 	"github.com/jinleibill/message-go/kafka"
+	"github.com/jinleibill/message-go/nats"
 	"golang.org/x/sync/errgroup"
 	"os"
 	"os/signal"
@@ -13,8 +14,22 @@ import (
 )
 
 func main() {
-	brokers := []string{"192.168.64.7:9092"}
-	consumer := kafka.NewConsumer(brokers, "example")
+	driver := os.Getenv("DRIVER")
+	if driver == "" {
+		driver = "kafka"
+	}
+
+	var consumer msg.Consumer
+	switch driver {
+	case "kafka":
+		brokers := []string{"192.168.64.7:9092"}
+		consumer = kafka.NewConsumer(brokers, "example")
+	case "nats":
+		servers := []string{"nats://127.0.0.1:4222"}
+		consumer = nats.NewConsumer(servers)
+	default:
+		panic("unknown driver")
+	}
 	subscriber := msg.NewSubscriber(consumer)
 	subscriber.Use(MessageProcessTime())
 
